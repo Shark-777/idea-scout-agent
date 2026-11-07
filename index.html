@@ -225,18 +225,7 @@ dialog::backdrop{background:rgba(0,0,0,.6)}
     </div>
   </section>
 
-  <section style="display:grid;gap:14px">
-    <div class="topbar"><h2>Источники и картинки</h2>
-      <div class="tabs" role="tablist">
-        <button class="tab" role="tab" aria-selected="true" data-tab="h" id="tab-h" type="button">Loops &amp; Graphs</button>
-        <button class="tab" role="tab" aria-selected="false" data-tab="a" id="tab-a" type="button">Steal any idea</button>
-      </div>
-    </div>
-    <p class="note" id="srcNote"></p>
-    <div class="gallery" id="gallery"></div>
-  </section>
-</div>
-<dialog id="zoom"><img alt=""></dialog>
+  
 
 <script>
 const CANDS=[["Peeklens","Content Creation",12500,0],["Redak","Content Creation",8140,5388],["Intentsly","Sales",7388,0],["Prospo","Artificial Intelligence",4801,0],["DevOps Daily","Education",3628,91],["1418 Technologies LLC","Developer Tools",3563,63],["ECOMSTATEMENT.COM","E-commerce",3304,1147],["lumabar","Productivity",3079,0],["Next Level Builders","Community",2740,747],["maibrain, LLC","—",2500,0],["Scalereach.ai","Artificial Intelligence",2409,1890],["BasinCheck","Analytics",2226,895],["Bidder iQ","Analytics",2052,0],["INXANITY Labs","Community",1450,973],["Project 1","—",1247,0]];
@@ -298,36 +287,7 @@ document.getElementById("runBtn").onclick=e=>{if(timer){stop();return}if(i>=STEP
 document.getElementById("stepBtn").onclick=()=>{stop();step()};
 document.getElementById("resetBtn").onclick=reset;
 
-const G={h:{note:"@HoodieFade_, 04.11.2026 — Loops & Graphs. Картинки — в оригинальном посте: https://x.com/HoodieFade_/status/2117959235690524883",items:[
- ["01","Обложка","задача делится на юниты, у каждого свой цикл, ворота и одна подпись человека"],
- ["02","Loop и Graph","loop живёт внутри узла, graph между узлами; без graph — отличный шаг в плохой очереди"],
- ["03","Ранг доказательств","тесты, схема и дифф — сильно; «LGTM» и пустой лог ошибок — шум"],
- ["04","Стоп-правило","14→9→5→2→0→0: выход после двух пустых раундов; done, cap, budget, memory, escape"],
- ["05","Последовательность ≠ зависимость","31 мин цепочкой против 17 мин fan-out + join"],
- ["06","Контракт узла","JOB, IN, OUT, FAILS AS, BUDGET; судит → модель, иначе код"],
- ["07","Четыре формы графа","chain, fan-out+join, router, bounded cycle — и где каждая ломается"],
- ["08","Кто рисует граф","частота × цена отката; повторяется — закрепи граф"],
- ["09","Отказ локален","RETRY, FALLBACK, SKIP, REPAIR, ESCALATE, STOP; return ticket со SCOPE"],
- ["10","Ворота по цене отката","auto-ship / hard evidence / closed door; уверенность модели — последней"],
- ["11","Пять слоёв","graph, loop, harness, context, prompt"]]},
- a:{note:"@Argona0x, 29.10.2026 — Steal any business idea. Цифры выручки — данные автора на 23–26 октября. Картинки — в оригинальном посте: https://x.com/Argona0x/status/2115833397599686886",items:[
- ["01","Обложка","курс, бренд viktor"],
- ["02","Карточка TrustMRR","Skillry: $10,836 всего, MRR $3,522, Stripe-проверка"],
- ["03","Начни с того, что продаётся","list.md и steal sheet вместо выдуманных идей"],
- ["04","Viktor в Slack","прогон только на чтение, понедельник 09:00"],
- ["05","Steal sheet в PDF","спрос, рост $27 → $10,051, оговорка про аудиторию основателя"],
- ["06","Настройки Claude","папка проекта, Opus 5.5 High"],
- ["07","Список 23 октября","10 бизнесов в фильтре $1k–$20k"],
- ["08","Фильтр решает","25 fastest-growing → 10 внутри → list.md"],
- ["09","Распределение выручки","67,6 % зарабатывают меньше $1k"],
- ["10","Лист Skillry","копируй спрос, предложение, каналы; угол — свой"],
- ["11","Сказал один раз","no-list в CLAUDE.md убирает лишнее на все недели"],
- ["12","Схема прогона","CLAUDE.md, list.md, maybe.md, sheets/, понедельник 9:00"]]}};
-const gal=document.getElementById("gallery"),zoom=document.getElementById("zoom");
-function showTab(k){document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===k));document.getElementById("srcNote").textContent=G[k].note;gal.innerHTML="";G[k].items.forEach(([n,t,d])=>{const f=document.createElement("figure");f.innerHTML=`<figcaption><b>${n} · ${t}.</b> ${d}</figcaption>`;gal.appendChild(f)});try{localStorage.setItem("scoutTab",k)}catch(e){}}
-document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
-zoom.onclick=()=>zoom.close();
-let t0="h";try{t0=localStorage.getItem("scoutTab")||"h"}catch(e){}showTab(G[t0]?t0:"h");
+
 
 const root=document.documentElement;
 document.getElementById("themeBtn").onclick=()=>{const dark=root.dataset.theme?root.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;root.dataset.theme=dark?"light":"dark"};
