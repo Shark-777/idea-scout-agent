@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="ru" data-theme="dark"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Idea Scout">
+<meta name="robots" content="noindex">
+<title>Idea Scout</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a dispatch board. Graph on top (what runs), live log beside it, then gates, Karpathy delta, sources. */
+:root{
+  --bg:#EEF1F3; --panel:#FFFFFF; --ink:#16212B; --muted:#5B6873; --line:#C9D1D8;
+  --accent:#D9480F; --accent-soft:#FCE6DA; --ok:#2B8A3E; --ok-soft:#E3F3E6; --warn:#B7791F; --warn-soft:#FBF0D9; --bad:#C92A2A; --bad-soft:#FBE3E3;
+  --node:#F6F8F9; --node-run:#FCE6DA; --node-done:#E3F3E6;
+  --f-display:"Archivo Narrow","Arial Narrow",Arial,sans-serif;
+  --f-body:"IBM Plex Sans",-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0F151A; --panel:#172028; --ink:#E4EAEE; --muted:#93A1AC; --line:#2C3943;
+  --accent:#FF7A3D; --accent-soft:#3A2116; --ok:#5BC46E; --ok-soft:#173022; --warn:#E3B04B; --warn-soft:#33290F; --bad:#FF6B6B; --bad-soft:#3A1A1A;
+  --node:#1D2731; --node-run:#3A2116; --node-done:#173022; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F151A; --panel:#172028; --ink:#E4EAEE; --muted:#93A1AC; --line:#2C3943;
+  --accent:#FF7A3D; --accent-soft:#3A2116; --ok:#5BC46E; --ok-soft:#173022; --warn:#E3B04B; --warn-soft:#33290F; --bad:#FF6B6B; --bad-soft:#3A1A1A;
+  --node:#1D2731; --node-run:#3A2116; --node-done:#173022; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:1120px;margin:0 auto;display:grid;gap:28px}
+h1,h2,h3{font-family:var(--f-display);font-weight:700;letter-spacing:.01em;text-wrap:balance;margin:0}
+h1{font-size:clamp(34px,6vw,54px);line-height:1}
+h2{font-size:26px;text-transform:uppercase;letter-spacing:.04em}
+h3{font-size:18px}
+p{margin:0}
+.eyebrow{font:500 12px/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.mono{font-family:var(--f-mono);font-size:13px}
+header{display:grid;gap:10px}
+header .lead{max-width:68ch;color:var(--muted)}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.btn{font:600 14px var(--f-body);border:1px solid var(--ink);background:var(--panel);color:var(--ink);padding:9px 14px;border-radius:6px;cursor:pointer}
+.btn.primary{background:var(--ink);color:var(--bg)}
+.btn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.btn[disabled]{opacity:.45;cursor:default}
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.board{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:16px}
+@media (max-width:860px){.board{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+.graph-scroll{overflow-x:auto}
+svg text{font-family:var(--f-mono);fill:var(--ink)}
+.n rect{fill:var(--node);stroke:var(--line);stroke-width:1.5;transition:fill .25s,stroke .25s}
+.n.run rect{fill:var(--node-run);stroke:var(--accent);stroke-width:2.5}
+.n.done rect{fill:var(--node-done);stroke:var(--ok)}
+.n.fail rect{fill:var(--bad-soft);stroke:var(--bad)}
+.n .kind{font-size:10px;fill:var(--muted)}
+.edge{stroke:var(--muted);stroke-width:1.5;fill:none}
+.edge.dash{stroke-dasharray:4 4}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;color:var(--muted);font-size:13px}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:6px;border:1.5px solid}
+.log{height:340px;overflow:auto;font:13px/1.5 var(--f-mono);display:grid;align-content:start;gap:4px}
+.log div{padding:4px 8px;border-left:3px solid var(--line);background:var(--node);border-radius:0 4px 4px 0;word-break:break-word}
+.log .ok{border-color:var(--ok)} .log .warn{border-color:var(--warn)} .log .bad{border-color:var(--bad)} .log .info{border-color:var(--accent)}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:560px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stat{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--panel)}
+.stat b{display:block;font:700 28px/1.1 var(--f-display);font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:500 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+td.num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--f-mono)}
+tr.pick td{background:var(--accent-soft)}
+.tbl{overflow-x:auto}
+.pill{display:inline-block;font:500 11px var(--f-mono);padding:2px 7px;border-radius:99px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.rounds{display:flex;align-items:flex-end;gap:10px;height:120px;padding-top:8px}
+.rounds .bar{flex:1;display:grid;align-content:end;justify-items:center;gap:4px;font:12px var(--f-mono);color:var(--muted)}
+.rounds .bar i{display:block;width:100%;max-width:56px;background:var(--ink);border-radius:4px 4px 0 0;min-height:3px;transition:height .4s}
+.rounds .bar.zero i{background:var(--line)}
+.gates{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.gates{grid-template-columns:1fr}}
+.gate{border-radius:10px;padding:14px;border:2px solid;display:grid;gap:6px;align-content:start}
+.gate.auto{border-color:var(--ok);background:var(--ok-soft)}
+.gate.hard{border-color:var(--warn);background:var(--warn-soft)}
+.gate.closed{border-color:var(--bad);background:var(--bad-soft)}
+.gate ul{margin:0;padding-left:18px}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:760px){.two{grid-template-columns:1fr}}
+.sheet{font:13px/1.6 var(--f-mono);white-space:pre-wrap;background:var(--node);border:1px dashed var(--line);border-radius:8px;padding:12px;overflow-x:auto}
+.delta{display:grid;gap:10px}
+.delta details{border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:10px 14px}
+.delta summary{cursor:pointer;font-weight:600}
+.delta details p{margin-top:8px;color:var(--muted)}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.gallery figure{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;display:grid}
+.gallery img{width:100%;aspect-ratio:4/3;object-fit:contain;background:#fff;cursor:zoom-in}
+.gallery figcaption{padding:10px 12px;font-size:13px;color:var(--muted)}
+.gallery figcaption b{color:var(--ink)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{font:600 13px var(--f-body);padding:7px 12px;border-radius:99px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.stack{display:grid;gap:6px}
+.layer{display:grid;grid-template-columns:120px minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:center;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+.layer b{font:700 16px var(--f-display);letter-spacing:.06em}
+.layer .miss{color:var(--bad);font-size:13px}
+@media (max-width:560px){.layer{grid-template-columns:1fr}}
+dialog{border:none;border-radius:10px;padding:0;max-width:min(96vw,1100px);background:var(--panel)}
+dialog img{display:block;max-width:100%;max-height:86vh}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+.note{font-size:13px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="topbar">
+      <span class="eyebrow">agent-lab · idea-scout · рабочее имя</span>
+      <button class="btn" id="themeBtn" type="button">Тема</button>
+    </div>
+    <h1>Idea Scout</h1>
+    <p class="lead">Агент раз в неделю берёт бизнесы с проверенной выручкой, разбирает, за что им платят, и превращает это в улучшения твоих приложений. Ниже — его граф. Нажми «Запустить прогон» и смотри, как узлы работают по очереди и параллельно.</p>
+  </header>
+
+  <section class="board">
+    <div class="panel">
+      <div class="topbar" style="margin-bottom:10px">
+        <h3>Граф прогона</h3>
+        <div class="controls">
+          <button class="btn primary" id="runBtn" type="button">Запустить прогон</button>
+          <button class="btn" id="stepBtn" type="button">Шаг</button>
+          <button class="btn" id="resetBtn" type="button">Сброс</button>
+        </div>
+      </div>
+      <div class="graph-scroll">
+        <svg id="graph" viewBox="0 0 760 300" width="100%" style="min-width:620px" role="img" aria-label="Граф агента Idea Scout">
+          <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+          <path class="edge" d="M130,60 C160,60 160,110 190,110" marker-end="url(#ar)"/>
+          <path class="edge" d="M130,160 C160,160 160,110 190,110" marker-end="url(#ar)"/>
+          <path class="edge" d="M310,110 L350,110" marker-end="url(#ar)"/>
+          <path class="edge dash" d="M130,250 C300,250 380,170 400,135" marker-end="url(#ar)"/>
+          <path class="edge" d="M470,110 L500,110" marker-end="url(#ar)"/>
+          <path class="edge" d="M560,135 L560,175" marker-end="url(#ar)"/>
+          <path class="edge" d="M620,200 L650,200" marker-end="url(#ar)"/>
+          <path class="edge" d="M700,175 L700,135" marker-end="url(#ar)"/>
+          <g class="n" data-id="collect"><rect x="10" y="35" width="120" height="50" rx="8"/><text x="22" y="57">collect</text><text class="kind" x="22" y="74">код · 0 токенов</text></g>
+          <g class="n" data-id="scan"><rect x="10" y="135" width="120" height="50" rx="8"/><text x="22" y="157">mobile-scan</text><text class="kind" x="22" y="174">веб · ≤3 поиска</text></g>
+          <g class="n" data-id="nolist"><rect x="10" y="225" width="120" height="50" rx="8"/><text x="22" y="247">rejected.md</text><text class="kind" x="22" y="264">сказано один раз</text></g>
+          <g class="n" data-id="enrich"><rect x="190" y="85" width="120" height="50" rx="8"/><text x="202" y="107">enrich ×N</text><text class="kind" x="202" y="124">модель · параллельно</text></g>
+          <g class="n" data-id="rank"><rect x="350" y="85" width="120" height="50" rx="8"/><text x="362" y="107">rank+dedupe</text><text class="kind" x="362" y="124">код · 0 токенов</text></g>
+          <g class="n" data-id="sheet"><rect x="500" y="85" width="120" height="50" rx="8"/><text x="512" y="107">sheet</text><text class="kind" x="512" y="124">модель · шаблон</text></g>
+          <g class="n" data-id="match"><rect x="500" y="175" width="120" height="50" rx="8"/><text x="512" y="197">match</text><text class="kind" x="512" y="214">→ твои приложения</text></g>
+          <g class="n" data-id="gate"><rect x="650" y="175" width="100" height="50" rx="8"/><text x="662" y="197">gate</text><text class="kind" x="662" y="214">цена отката</text></g>
+          <g class="n" data-id="report"><rect x="650" y="85" width="100" height="50" rx="8"/><text x="662" y="107">report</text><text class="kind" x="662" y="124">артефакт+Pages</text></g>
+        </svg>
+      </div>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--node);border-color:var(--line)"></i>ждёт</span>
+        <span><i class="sw" style="background:var(--node-run);border-color:var(--accent)"></i>работает</span>
+        <span><i class="sw" style="background:var(--node-done);border-color:var(--ok)"></i>готово</span>
+        <span><i class="sw" style="background:var(--bad-soft);border-color:var(--bad)"></i>отказ → маршрут</span>
+      </div>
+    </div>
+
+    <div class="panel" style="display:grid;gap:12px;align-content:start">
+      <h3>Журнал</h3>
+      <div class="log" id="log" aria-live="polite"><div class="info">Нажми «Запустить прогон». Данные collect — реальный ответ TrustMRR от 6 ноября 2026; листы и предложения в этом прогоне — пример того, как их пишет агент.</div></div>
+    </div>
+  </section>
+
+  <section class="stats" id="stats">
+    <div class="stat"><b id="sPool">50</b><span>в пуле TrustMRR (публичный API)</span></div>
+    <div class="stat"><b id="sNew">15</b><span>новых в фильтре $1k–$20k</span></div>
+    <div class="stat"><b id="sMob">0</b><span>мобильных в пуле</span></div>
+    <div class="stat"><b id="sReq">0/25</b><span>веб-запросов из бюджета</span></div>
+  </section>
+
+  <section class="two">
+    <div class="panel" style="display:grid;gap:10px">
+      <h3>Кандидаты недели · 06.11.2026</h3>
+      <p class="note">Выручка за 30 дней проверена платёжным провайдером. Подсвечены те, что в демо-прогоне дошли до листа.</p>
+      <div class="tbl"><table id="cand"><thead><tr><th>имя</th><th>ниша</th><th>30 дн</th><th>MRR</th></tr></thead><tbody></tbody></table></div>
+    </div>
+    <div class="panel" style="display:grid;gap:10px;align-content:start">
+      <h3>Стоп-правило поиска</h3>
+      <p class="note">Каждый раунд считает только новые находки после дедупа по seen.json, включая отклонённые. Два пустых подряд — выход. Числа раундов здесь — пример.</p>
+      <div class="rounds" id="rounds"></div>
+      <h3 style="margin-top:6px">Пример листа (из демо)</h3>
+      <div class="sheet" id="sheet">Лист появится, когда прогон дойдёт до узла sheet.</div>
+    </div>
+  </section>
+
+  <section style="display:grid;gap:14px">
+    <h2>Ворота по цене отката</h2>
+    <div class="gates">
+      <div class="gate auto"><span class="pill">AUTO</span><h3>Агент делает сам</h3><ul><li>сбор и фильтр</li><li>steal sheets</li><li>отчёт: артефакт + GitHub Pages (после проверки на секреты)</li></ul></div>
+      <div class="gate hard"><span class="pill">ТВЁРДЫЕ ДОКАЗАТЕЛЬСТВА</span><h3>Предложить правку приложения</h3><ul><li>только с листом и цитатами</li><li>у каждой идеи cost_to_undo</li><li>самозаявленная выручка → maybe.md</li></ul></div>
+      <div class="gate closed"><span class="pill">ЗАКРЫТО</span><h3>Только ты</h3><ul><li>правки кода приложений</li><li>регистрации, покупки</li><li>контакты с основателями</li></ul></div>
+    </div>
+  </section>
+
+  <section style="display:grid;gap:14px">
+    <h2>Пять слоёв агента</h2>
+    <p class="note">Форма harness-агента по HoodieFade. Каждый пропущенный слой — работа, которую ты делаешь руками.</p>
+    <div class="stack">
+      <div class="layer"><b>GRAPH</b><span>какие юниты есть, кто подписывает</span><span class="miss">нет → одобряешь каждый шаг</span></div>
+      <div class="layer"><b>LOOP</b><span>правилен ли один юнит</span><span class="miss">нет → читаешь каждый вывод</span></div>
+      <div class="layer"><b>HARNESS</b><span>инструменты, песочница, права</span><span class="miss">нет → жмёшь «allow» весь день</span></div>
+      <div class="layer"><b>CONTEXT</b><span>что видит модель (CLAUDE.md, portfolio.md)</span><span class="miss">нет → вставляешь файлы в чат</span></div>
+      <div class="layer"><b>PROMPT</b><span>что ты просишь</span><span class="miss">нет → переписываешь одну просьбу</span></div>
+    </div>
+  </section>
+
+  <section style="display:grid;gap:14px">
+    <h2>Что добавлено в Mobile Karpathy</h2>
+    <div class="delta">
+      <details open><summary>Стоп-правило вместо «пока не станет хорошо»</summary><p>Новые находки считаются по ключу экран:элемент:симптом против всего бэклога и rejected.md. Два круга без новых — стоп, максимум 4 круга.</p></details>
+      <details><summary>Доказательства по силе</summary><p>DONE только по сильным: красная проверка стала зелёной, analyze чистый, дифф в файлах юнита, скриншот посмотрен. «Reviewer одобрил» — слабо. Пустой лог ошибок — не доказательство.</p></details>
+      <details><summary>Маршрут отказов</summary><p>RETRY → FALLBACK → SKIP → REPAIR одного юнита → ESCALATE после 3 → STOP при бюджете или правах. Пачку из-за одного красного юнита не откатывать.</p></details>
+      <details><summary>Return ticket с SCOPE</summary><p>UNIT, VERDICT, PROOF «ожидалось X, получено Y», SCOPE «только этот файл». Без SCOPE однострочный фикс разрастается в четыре файла.</p></details>
+      <details><summary>Learning edge</summary><p>Причина прошедшего фикса пишется правилом не только в RULES.md, но и в шапку backlog.md, чтобы следующая нарезка юнитов её учитывала.</p></details>
+      <details><summary>Fan-out поиска и код вместо модели</summary><p>analyze, тесты, поиск по коду и чек-лист App Store идут параллельно; дедуп и сортировку делает код.</p></details>
+      <details><summary>Сказано один раз — запомнено</summary><p>«Это не баг», «так задумано» → строка в rejected.md; такие находки больше не возвращаются.</p></details>
+      <details><summary>Ворота по цене отката и контракты субагентов</summary><p>Авто / твёрдые доказательства / закрыто. Каждый субагент получает JOB, IN, OUT, FAILS AS, BUDGET; параллельные ревьюеры — в отдельных контекстах.</p></details>
+    </div>
+  </section>
+
+  <section style="display:grid;gap:14px">
+    <div class="topbar"><h2>Источники и картинки</h2>
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" aria-selected="true" data-tab="h" id="tab-h" type="button">Loops &amp; Graphs</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="a" id="tab-a" type="button">Steal any idea</button>
+      </div>
+    </div>
+    <p class="note" id="srcNote"></p>
+    <div class="gallery" id="gallery"></div>
+  </section>
+</div>
+<dialog id="zoom"><img alt=""></dialog>
+
+<script>
+const CANDS=[["Peeklens","Content Creation",12500,0],["Redak","Content Creation",8140,5388],["Intentsly","Sales",7388,0],["Prospo","Artificial Intelligence",4801,0],["DevOps Daily","Education",3628,91],["1418 Technologies LLC","Developer Tools",3563,63],["ECOMSTATEMENT.COM","E-commerce",3304,1147],["lumabar","Productivity",3079,0],["Next Level Builders","Community",2740,747],["maibrain, LLC","—",2500,0],["Scalereach.ai","Artificial Intelligence",2409,1890],["BasinCheck","Analytics",2226,895],["Bidder iQ","Analytics",2052,0],["INXANITY Labs","Community",1450,973],["Project 1","—",1247,0]];
+const PICK=new Set(["Peeklens","Redak"]);
+const fmt=n=>"$"+n.toLocaleString("en-US");
+const tb=document.querySelector("#cand tbody");
+CANDS.forEach(c=>{const tr=document.createElement("tr");tr.dataset.name=c[0];tr.innerHTML=`<td>${c[0]}</td><td><span class="pill">${c[1]}</span></td><td class="num">${fmt(c[2])}</td><td class="num">${fmt(c[3])}</td>`;tb.appendChild(tr)});
+
+const ROUNDS=[15,3,0,0];
+const roundsEl=document.getElementById("rounds");
+function drawRounds(k){roundsEl.innerHTML="";ROUNDS.forEach((v,i)=>{const d=document.createElement("div");d.className="bar"+(v===0?" zero":"");const h=i<k?Math.max(3,v/15*80):3;d.innerHTML=`<span>${i<k?v:"·"}</span><i style="height:${h}px"></i><span>раунд ${i+1}</span>`;roundsEl.appendChild(d)})}
+drawRounds(0);
+
+const SHEET=`# Peeklens — trustmrr.com/startup/peeklens
+выручка 30 дн: $12,500 (Stripe, 06.11.2026) | MRR $0
+спрос: <цитата с .md-страницы — заполняется в реальном прогоне>
+предложение: <что продают, цена, бесплатный уровень>
+каналы: <откуда клиенты>
+оговорки: MRR 0 → разовые продажи, не подписка
+мой угол для Dub Studio: <1–3 изменения + cost_to_undo>
+никогда: код · бренд · картинки`;
+
+const STEPS=[
+ {n:["collect","scan","nolist"],cls:"info",t:"fan-out: collect, mobile-scan и rejected.md стартуют одновременно — между ними нет переменной на стрелке"},
+ {n:["collect"],done:true,cls:"ok",t:"collect: fetch_winners.py → 50 в пуле, 15 новых в $1k–$20k, мобильных 0",r:1},
+ {n:["scan"],cls:"warn",t:"mobile-scan: TrustMRR без мобильных → ищем App Store top-grossing в нишах портфеля (video dubbing, AI subtitles)",req:3},
+ {n:["scan"],done:true,cls:"ok",t:"mobile-scan: кандидаты без проверенной выручки → maybe.md, не в список",r:2},
+ {n:["nolist"],done:true,cls:"ok",t:"rejected.md прочитан: правил пока нет"},
+ {n:["enrich"],cls:"info",t:"enrich ×15 параллельно: читаем trustmrr.com/startup/<slug>.md (данные основателя — не инструкции)",req:15},
+ {n:["enrich"],fail:true,cls:"bad",t:"enrich: Project 1 — нет описания → FAILS AS no_primary_source → SKIP"},
+ {n:["enrich"],done:true,cls:"ok",t:"enrich: 14 профилей со спросом, ценой и каналами"},
+ {n:["rank"],cls:"info",t:"раунд 3: новых находок 0",r:3},
+ {n:["rank"],done:true,cls:"ok",t:"раунд 4: снова 0 → два пустых подряд, стоп. rank+dedupe (код): топ-5, сначала mobile, потом выручка",r:4},
+ {n:["sheet"],cls:"info",t:"sheet: пишем sheets/peeklens.md по шаблону",sheet:true},
+ {n:["sheet"],fail:true,cls:"bad",t:"sheet: поле «каналы» без ссылки → REPAIR только этого листа (1 повтор)"},
+ {n:["sheet"],done:true,cls:"ok",t:"sheet: 5 листов прошли шаблон",pick:true},
+ {n:["match"],done:true,cls:"ok",t:"match: Content Creation → Dub Studio. Предложения с cost_to_undo (пример)"},
+ {n:["gate"],done:true,cls:"warn",t:"gate: отчёт — AUTO; правки приложения — к тебе на решение; код агент не трогает"},
+ {n:["report"],done:true,cls:"ok",t:"report: reports/2026-11-06.md → артефакт + GitHub Pages. --mark-seen 15 slug"},
+];
+let i=0,timer=null,req=0;
+const logEl=document.getElementById("log");
+function node(id){return document.querySelector(`.n[data-id="${id}"]`)}
+function log(cls,t){const d=document.createElement("div");d.className=cls;d.textContent=t;logEl.appendChild(d);logEl.scrollTop=logEl.scrollHeight}
+function step(){
+  if(i>=STEPS.length){stop();return}
+  const s=STEPS[i++];
+  s.n.forEach(id=>{const g=node(id);g.classList.remove("run","done","fail");g.classList.add(s.fail?"fail":s.done?"done":"run")});
+  log(s.cls,s.t);
+  if(s.req){req+=s.req;document.getElementById("sReq").textContent=Math.min(req,25)+"/25"}
+  if(s.r)drawRounds(s.r);
+  if(s.sheet)document.getElementById("sheet").textContent=SHEET;
+  if(s.pick)document.querySelectorAll("#cand tr").forEach(tr=>{if(PICK.has(tr.dataset.name))tr.classList.add("pick")});
+  if(i>=STEPS.length){stop();log("info","Прогон завершён. Тебе остаётся одно решение: какие предложения брать в работу.")}
+}
+function stop(){clearInterval(timer);timer=null;document.getElementById("runBtn").textContent="Запустить прогон"}
+function reset(){stop();i=0;req=0;document.querySelectorAll(".n").forEach(g=>g.classList.remove("run","done","fail"));logEl.innerHTML="";log("info","Сброшено. Нажми «Запустить прогон».");drawRounds(0);document.getElementById("sReq").textContent="0/25";document.getElementById("sheet").textContent="Лист появится, когда прогон дойдёт до узла sheet.";document.querySelectorAll("#cand tr.pick").forEach(t=>t.classList.remove("pick"))}
+document.getElementById("runBtn").onclick=e=>{if(timer){stop();return}if(i>=STEPS.length)reset();e.target.textContent="Пауза";timer=setInterval(step,matchMedia("(prefers-reduced-motion: reduce)").matches?400:1100);step()};
+document.getElementById("stepBtn").onclick=()=>{stop();step()};
+document.getElementById("resetBtn").onclick=reset;
+
+const G={h:{note:"@HoodieFade_, 04.11.2026 — Loops & Graphs. Картинки — в оригинальном посте: https://x.com/HoodieFade_/status/2117959235690524883",items:[
+ ["01","Обложка","задача делится на юниты, у каждого свой цикл, ворота и одна подпись человека"],
+ ["02","Loop и Graph","loop живёт внутри узла, graph между узлами; без graph — отличный шаг в плохой очереди"],
+ ["03","Ранг доказательств","тесты, схема и дифф — сильно; «LGTM» и пустой лог ошибок — шум"],
+ ["04","Стоп-правило","14→9→5→2→0→0: выход после двух пустых раундов; done, cap, budget, memory, escape"],
+ ["05","Последовательность ≠ зависимость","31 мин цепочкой против 17 мин fan-out + join"],
+ ["06","Контракт узла","JOB, IN, OUT, FAILS AS, BUDGET; судит → модель, иначе код"],
+ ["07","Четыре формы графа","chain, fan-out+join, router, bounded cycle — и где каждая ломается"],
+ ["08","Кто рисует граф","частота × цена отката; повторяется — закрепи граф"],
+ ["09","Отказ локален","RETRY, FALLBACK, SKIP, REPAIR, ESCALATE, STOP; return ticket со SCOPE"],
+ ["10","Ворота по цене отката","auto-ship / hard evidence / closed door; уверенность модели — последней"],
+ ["11","Пять слоёв","graph, loop, harness, context, prompt"]]},
+ a:{note:"@Argona0x, 29.10.2026 — Steal any business idea. Цифры выручки — данные автора на 23–26 октября. Картинки — в оригинальном посте: https://x.com/Argona0x/status/2115833397599686886",items:[
+ ["01","Обложка","курс, бренд viktor"],
+ ["02","Карточка TrustMRR","Skillry: $10,836 всего, MRR $3,522, Stripe-проверка"],
+ ["03","Начни с того, что продаётся","list.md и steal sheet вместо выдуманных идей"],
+ ["04","Viktor в Slack","прогон только на чтение, понедельник 09:00"],
+ ["05","Steal sheet в PDF","спрос, рост $27 → $10,051, оговорка про аудиторию основателя"],
+ ["06","Настройки Claude","папка проекта, Opus 5.5 High"],
+ ["07","Список 23 октября","10 бизнесов в фильтре $1k–$20k"],
+ ["08","Фильтр решает","25 fastest-growing → 10 внутри → list.md"],
+ ["09","Распределение выручки","67,6 % зарабатывают меньше $1k"],
+ ["10","Лист Skillry","копируй спрос, предложение, каналы; угол — свой"],
+ ["11","Сказал один раз","no-list в CLAUDE.md убирает лишнее на все недели"],
+ ["12","Схема прогона","CLAUDE.md, list.md, maybe.md, sheets/, понедельник 9:00"]]}};
+const gal=document.getElementById("gallery"),zoom=document.getElementById("zoom");
+function showTab(k){document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===k));document.getElementById("srcNote").textContent=G[k].note;gal.innerHTML="";G[k].items.forEach(([n,t,d])=>{const f=document.createElement("figure");f.innerHTML=`<figcaption><b>${n} · ${t}.</b> ${d}</figcaption>`;gal.appendChild(f)});try{localStorage.setItem("scoutTab",k)}catch(e){}}
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+zoom.onclick=()=>zoom.close();
+let t0="h";try{t0=localStorage.getItem("scoutTab")||"h"}catch(e){}showTab(G[t0]?t0:"h");
+
+const root=document.documentElement;
+document.getElementById("themeBtn").onclick=()=>{const dark=root.dataset.theme?root.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;root.dataset.theme=dark?"light":"dark"};
+</script>
+
+</html>
