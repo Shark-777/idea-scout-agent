@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ru" data-theme="dark"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Idea Scout · неделя 6 ноября</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: weekly field report — verdict first, then decisions, then evidence (sheets), then gaps. */
+:root{
+  --bg:#EEF1F3; --panel:#FFFFFF; --ink:#16212B; --muted:#5B6873; --line:#C9D1D8;
+  --accent:#D9480F; --accent-soft:#FCE6DA; --ok:#2B8A3E; --ok-soft:#E3F3E6; --warn:#B7791F; --warn-soft:#FBF0D9;
+  --f-display:"Archivo Narrow","Arial Narrow",Arial,sans-serif; --f-body:"IBM Plex Sans",-apple-system,"Segoe UI",sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F151A;--panel:#172028;--ink:#E4EAEE;--muted:#93A1AC;--line:#2C3943;--accent:#FF7A3D;--accent-soft:#3A2116;--ok:#5BC46E;--ok-soft:#173022;--warn:#E3B04B;--warn-soft:#33290F;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0F151A;--panel:#172028;--ink:#E4EAEE;--muted:#93A1AC;--line:#2C3943;--accent:#FF7A3D;--accent-soft:#3A2116;--ok:#5BC46E;--ok-soft:#173022;--warn:#E3B04B;--warn-soft:#33290F;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:980px;margin:0 auto;display:grid;gap:26px}
+h1,h2,h3{font-family:var(--f-display);font-weight:700;margin:0;text-wrap:balance}
+h1{font-size:clamp(32px,6vw,48px);line-height:1.05}
+h2{font-size:22px;text-transform:uppercase;letter-spacing:.04em}
+h3{font-size:18px}
+p{margin:0}
+.eyebrow{font:500 12px/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+.verdict{border-left:4px solid var(--accent);background:var(--accent-soft);padding:14px 16px;border-radius:0 10px 10px 0;max-width:72ch}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:560px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stat{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--panel)}
+.stat b{display:block;font:700 28px/1.1 var(--f-display);font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:500 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+td.num{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.pill{display:inline-block;font:500 11px var(--f-mono);padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.pill.ok{border-color:var(--ok);color:var(--ok)} .pill.warn{border-color:var(--warn);color:var(--warn)}
+.ideas{display:grid;gap:12px}
+.idea{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:start}
+.idea .n{font:700 26px/1 var(--f-display);color:var(--accent);font-variant-numeric:tabular-nums}
+.idea p+p{margin-top:4px}
+.sheets{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.sheet{display:grid;gap:8px;align-content:start}
+.sheet dl{margin:0;display:grid;gap:6px;font-size:14px}
+.sheet dt{font:500 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.sheet dd{margin:0}
+.sheet a{color:var(--accent)}
+ul{margin:0;padding-left:20px;display:grid;gap:4px}
+.btn{font:600 13px var(--f-body);border:1px solid var(--ink);background:var(--panel);color:var(--ink);padding:7px 12px;border-radius:6px;cursor:pointer}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:10px">
+    <div class="top"><span class="eyebrow">idea-scout · отчёт · 06.11.2026 · прогон №1</span><button class="btn" id="theme" type="button">Тема</button></div>
+    <h1>Неделя 6 ноября: дубляж видео продаётся</h1>
+    <p class="verdict">Три прямых конкурента Dub Studio зарабатывают с проверенной выручкой. Главный вывод недели — низкая цена входа и короткие вертикальные видео. Проверенных мобильных приложений пока нет, но у TranslateMom оплата идёт через RevenueCat, а это почти наверняка мобильные подписки.</p>
+  </header>
+
+  <section class="stats">
+    <div class="stat"><b>50</b><span>в пуле TrustMRR</span></div>
+    <div class="stat"><b>15 + 3</b><span>новых в фильтре + найдено поиском</span></div>
+    <div class="stat"><b>5</b><span>листов написано</span></div>
+    <div class="stat"><b>11/25</b><span>веб-запросов из бюджета</span></div>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>Что предлагаю для Dub Studio</h2>
+    <div class="ideas">
+      <div class="idea panel"><span class="n">1</span><div><h3>Дешёвая входная ступень $4.50–$10</h3><p class="muted">TranslateMom продаёт $4.50 / $9 / $22 в месяц, VoiceCheap — лесенку от $10 до $199. Сначала сверить с текущими пакетами Dub Studio.</p><p><span class="pill ok">откат: низкий</span></p></div></div>
+      <div class="idea panel"><span class="n">2</span><div><h3>TikTok, Shorts и Reels как главный канал</h3><p class="muted">VoiceCheap привлекает создателей через TikTok, Instagram, YouTube и SEO; TranslateMom строит продукт вокруг вертикальных видео.</p><p><span class="pill ok">откат: низкий</span></p></div></div>
+      <div class="idea panel"><span class="n">3</span><div><h3>Гипотеза: «дубляж под ключ за 72 часа»</h3><p class="muted">По образцу услуги Redak (от €490 в месяц). Совпадение с нишей слабое — это скорее идея нового тарифа, чем правка приложения.</p><p><span class="pill warn">откат: средний</span></p></div></div>
+    </div>
+    <p class="muted">Код приложения агент не трогал. Что брать в работу — решаешь ты.</p>
+  </section>
+
+  <section class="panel" style="display:grid;gap:10px">
+    <h2>Победители недели</h2>
+    <div class="tbl"><table>
+      <thead><tr><th>имя</th><th>что делает</th><th>30 дн</th><th>MRR</th><th>мобильное</th></tr></thead>
+      <tbody>
+        <tr><td>VoiceCheap</td><td>дубляж и перевод видео, клон голоса</td><td class="num">$15,581</td><td class="num">$3,449</td><td><span class="pill">не подтверждено</span></td></tr>
+        <tr><td>Peeklens</td><td>вне ниши, 2 крупных платежа</td><td class="num">$12,500</td><td class="num">$0</td><td><span class="pill">нет</span></td></tr>
+        <tr><td>Redak</td><td>контент-услуга, вне ниши</td><td class="num">$8,140</td><td class="num">$5,388</td><td><span class="pill">нет</span></td></tr>
+        <tr><td>TranslateMom</td><td>субтитры, перевод, дубляж для коротких видео</td><td class="num">$3,720</td><td class="num">$3,845</td><td><span class="pill warn">вероятно (RevenueCat)</span></td></tr>
+        <tr><td>VideoDubber.ai</td><td>AI-дубляж видео</td><td class="num">$751</td><td class="num">$512</td><td><span class="pill">нет</span></td></tr>
+      </tbody>
+    </table></div>
+    <p class="muted">Выручка проверена платёжным провайдером (Stripe, RevenueCat) на trustmrr.com, синхронизация 06.11.2026. VideoDubber.ai ниже порога $1k — попал по нише. VoiceCheap, TranslateMom и VideoDubber.ai выставлены на продажу.</p>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>Листы: что можно забрать</h2>
+    <div class="sheets">
+      <article class="panel sheet"><h3>VoiceCheap</h3><dl>
+        <dt>спрос</dt><dd>«Translate your videos and multiply your audience by 10» — слова основателя</dd>
+        <dt>предложение</dt><dd>дубляж, клон голоса, lip-sync, субтитры; $10 / $20 / $30 / $90 / $199</dd>
+        <dt>каналы</dt><dd>SEO, TikTok, Instagram, YouTube, cold email, LinkedIn</dd>
+        <dt>оговорки</dt><dd>около $14.4k из $15.6k пришли 13–15 октября — разовый всплеск; MRR вырос лишь на 3.5 %</dd>
+        <dd><a href="https://trustmrr.com/startup/voicecheap" target="_blank" rel="noopener">trustmrr.com/startup/voicecheap</a></dd></dl></article>
+      <article class="panel sheet"><h3>TranslateMom</h3><dl>
+        <dt>спрос</dt><dd>«Instantly subtitle, translate, or dub your content… in 100+ languages»</dd>
+        <dt>предложение</dt><dd>субтитры + перевод + дубляж для TikTok, Reels, Shorts; $4.50 / $9 / $22 в месяц; 245 подписок</dd>
+        <dt>каналы</dt><dd>не подтверждены; 126,813 визитов за 30 дней, $0.03 выручки на визит</dd>
+        <dt>оговорки</dt><dd>выручка за 30 дней −22 %; на продаже за $120,000</dd>
+        <dd><a href="https://trustmrr.com/startup/translatemom" target="_blank" rel="noopener">trustmrr.com/startup/translatemom</a></dd></dl></article>
+      <article class="panel sheet"><h3>VideoDubber.ai</h3><dl>
+        <dt>суть</dt><dd>прямой конкурент по дубляжу, но маленькая выручка — ориентир по позиционированию, не по деньгам</dd>
+        <dd><a href="https://trustmrr.com/startup/videodubber-ai" target="_blank" rel="noopener">trustmrr.com/startup/videodubber-ai</a></dd></dl></article>
+      <article class="panel sheet"><h3>Redak и Peeklens</h3><dl>
+        <dt>суть</dt><dd>высокая выручка, но вне ниши. Из Redak — только идея услуги «под ключ»; у Peeklens спрос и каналы не подтверждены</dd></dl></article>
+    </div>
+  </section>
+
+  <section class="panel" style="display:grid;gap:10px">
+    <h2>Не проверено</h2>
+    <ul>
+      <li>Есть ли iOS-приложения у VoiceCheap и TranslateMom — следующий шаг: поиск в App Store по имени.</li>
+      <li>Цены и каналы самой Dub Studio — без них сравнение с конкурентами неполное.</li>
+      <li>Выручка приложений из App Store: есть только оценки AppGoblin без платёжного провайдера, они в maybe.md.</li>
+      <li>10 кандидатов вне ниши не обогащались.</li>
+    </ul>
+    <p class="muted">Агент записал два новых правила нарезки: RevenueCat считается признаком мобильного приложения, а бизнесы вне ниши уходят в отдельную строку, а не в топ-5.</p>
+  </section>
+</div>
+<script>
+document.getElementById("theme").onclick=()=>{const r=document.documentElement;const d=r.dataset.theme?r.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;r.dataset.theme=d?"light":"dark"};
+</script>
+
+</html>
